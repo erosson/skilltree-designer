@@ -1,0 +1,9 @@
+{
+  "name": "skilltree-designer",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/erosson/skilltree-designer",
+  "author": "Evan Rosson <github@erosson.org>",
+  "license": "GPLv3",
+  "private": true
+}
