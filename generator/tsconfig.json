@@ -1,5 +1,7 @@
 {
     "compilerOptions": {
+        "strict": true,
+        "esModuleInterop": true,
         "lib": [
             "dom",
             "es2019"
@@ -7,6 +9,8 @@
         "sourceMap": true,
         "jsx": "react",
         "outDir": "dist",
-        "strict": true
-    }
+    },
+    "include": [
+        "./src/**/*",
+    ]
 }
