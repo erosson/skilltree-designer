@@ -1,6 +1,6 @@
-import * as M from './model'
-import { output } from './output'
-import { svgs } from './svg'
+import * as M from '../src/model'
+import { output } from '../src/output'
+import { svgs } from '../src/svg'
 import * as fs from 'fs/promises'
 
 const treeX = M.edges([
@@ -37,7 +37,6 @@ const tree = M.edges([
 
 const svg = svgs(output([tree]))
 export default svg
-
 if (require.main === module) {
-    fs.writeFile("./dist/example.svg", svg)
+    fs.writeFile(`./dist/public/${require('path').basename(__filename)}.svg`, svg)
 }

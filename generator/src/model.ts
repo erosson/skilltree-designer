@@ -82,6 +82,16 @@ export function edges(els: Element[], edges: Edge[]): Edges {
     }
     return { type: ElementType.Edges, edges, els }
 }
+function edgeLoop_(els: Element[]): Edge[] {
+    const nodes = getDescendantNodes(els)
+    return nodes.map((node, i) => edge(node.id, nodes[(i + 1) % nodes.length].id))
+}
+export function edgesLoop(els: Element[]): Edges {
+    return edges(els, edgeLoop_(els))
+}
+export function edgesLine(els: Element[]): Edges {
+    return edges(els, edgeLoop_(els).slice(0, -1))
+}
 export function offset(els: Element[], offset: C.Coords): Offset {
     return { type: ElementType.Offset, els, offset }
 }

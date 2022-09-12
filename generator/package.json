@@ -5,9 +5,9 @@
   "license": "GPLv3",
   "private": true,
   "scripts": {
-    "build": "tsc && node --enable-source-maps ./dist/example.js",
-    "watch": "chokidar 'src/**/*.{ts,tsx}' --initial -c 'yarn build'",
-    "start": "concurrently -k 'serve dist' 'yarn watch' ",
+    "build": "tsc && node --enable-source-maps ./dist/examples/all.js",
+    "watch": "chokidar '{examples,src}/**/*.{ts,tsx}' --initial -c 'yarn build'",
+    "start": "concurrently -k 'serve dist/public' 'yarn watch' ",
     "test": "jest"
   },
   "devDependencies": {
