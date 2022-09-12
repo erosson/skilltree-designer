@@ -1,9 +1,9 @@
 import { describe, expect, test } from '@jest/globals'
 import * as M from '../src/model'
 
-test('jest typechecks', () => {
-    const x: number = "three"
-})
+//test('jest typechecks', () => {
+//    const x: number = "three"
+//})
 test('create a node', () => {
     const n = M.node()
     expect(n.type).toEqual(M.ElementType.Node)
