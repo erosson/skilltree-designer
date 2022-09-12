@@ -1,4 +1,3 @@
-import { flushSync } from 'react-dom'
 import * as M from './model'
 import { output } from './output'
 import { svgs } from './svg'
@@ -26,10 +25,12 @@ const treeY = M.edges([
 ], [
     M.edge("c", "d"),
 ])
-const tree = M.edges([M.orbit([
-    [4, treeX],
-    [8, treeY],
-], { radius: 20, slices: 12 })], [
+const tree = M.edges([
+    M.orbit([
+        [4, treeX],
+        [8, treeY],
+    ], { radius: 20, slices: 12 })
+], [
     M.edge("a", "c"),
     M.edge("b", "d"),
 ])

@@ -1,12 +1,13 @@
 import * as C from './coords'
 import { assertNever } from './util'
 
-export type Element = Node | Edges | Offset | Orbit
+export type Element = Node | Edges | Offset | Orbit | Rotate
 export enum ElementType {
     Node = "node",
     Edges = "edges",
     Offset = "offset",
     Orbit = "orbit",
+    Rotate = "rotate",
 }
 
 export interface Node {
@@ -25,6 +26,11 @@ export interface Edges {
 export interface Offset {
     type: ElementType.Offset
     offset: C.Coords
+    els: Element[]
+}
+export interface Rotate {
+    type: ElementType.Rotate
+    angle: C.Angle
     els: Element[]
 }
 
@@ -98,6 +104,7 @@ function getChildren(el: Element): Element[] {
         case ElementType.Edges: return el.els
         case ElementType.Offset: return el.els
         case ElementType.Orbit: return el.els.map(([slice, el]) => el)
+        case ElementType.Rotate: return el.els
         default: throw assertNever(el)
     }
 }

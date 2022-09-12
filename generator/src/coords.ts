@@ -45,3 +45,13 @@ export function toPolar(c: Coords): PolarCoords {
         default: throw assertNever(c)
     }
 }
+
+export function offset(a: Coords, b: Coords): Coords {
+    a = toXY(a)
+    b = toXY(b)
+    return xy(a.x + b.x, a.y + b.y)
+}
+export function rotate(c: Coords, a: A.Angle): Coords {
+    c = toPolar(c)
+    return polar(c.r, A.add(c.angle, a))
+}

@@ -28,6 +28,7 @@ function output_(e: M.Element): Tree {
         case M.ElementType.Edges: return outputEdges(e)
         case M.ElementType.Offset: return outputOffset(e)
         case M.ElementType.Orbit: return output(M.orbitToOffsets(e))
+        case M.ElementType.Rotate: return outputRotate(e)
         default: throw assertNever(e)
     }
 }
@@ -37,19 +38,6 @@ function outputNode(n: M.Node): Node {
         x: 0,
         y: 0,
     }
-}
-function offsetXY(c: C.XYCoords, o: Tree): Tree {
-    return {
-        ...o,
-        nodes: o.nodes.map(n => ({
-            ...n,
-            x: n.x + c.x,
-            y: n.y + c.y
-        })),
-    }
-}
-function offset(c: C.Coords, o: Tree): Tree {
-    return offsetXY(C.toXY(c), o)
 }
 function merge(os: Tree[]): Tree {
     return {
@@ -68,8 +56,33 @@ function outputEdges(g: M.Edges): Tree {
     // out.groups.push(...)
     return out
 }
+
+function offset(c: C.Coords, o: Tree): Tree {
+    return {
+        ...o,
+        nodes: o.nodes.map(n => {
+            const { x, y } = C.toXY(C.offset(C.xy(n.x, n.y), c))
+            return { ...n, x, y }
+        }),
+    }
+}
 function outputOffset(g: M.Offset): Tree {
     const out = offset(g.offset, output(g.els))
+    // out.groups.push(...)
+    return out
+}
+
+function rotate(a: C.Angle, o: Tree): Tree {
+    return {
+        ...o,
+        nodes: o.nodes.map(n => {
+            const { x, y } = C.toXY(C.rotate(C.xy(n.x, n.y), a))
+            return { ...n, x, y }
+        }),
+    }
+}
+function outputRotate(g: M.Rotate): Tree {
+    const out = rotate(g.angle, output(g.els))
     // out.groups.push(...)
     return out
 }
