@@ -21,8 +21,7 @@ test('create an angle', () => {
 })
 
 const xys = { right: C.xy(1, 0), up: C.xy(0, 1), left: C.xy(-1, 0), down: C.xy(0, -1) }
-const angles = { right: C.revolutions(0), up: C.revolutions(1 / 4), left: C.revolutions(2 / 4), down: C.revolutions(3 / 4) }
-const polars = { right: C.polar(1, angles.right), up: C.polar(1, angles.up), left: C.polar(1, angles.left), down: C.polar(1, angles.down) }
+const polars = { right: C.polar(1, C.right), up: C.polar(1, C.up), left: C.polar(1, C.left), down: C.polar(1, C.down) }
 const dirs = Object.keys(xys) as (keyof typeof xys)[]
 const dirPairs: [C.XYCoords, C.PolarCoords][] = dirs.map(dir => [xys[dir], polars[dir]])
 

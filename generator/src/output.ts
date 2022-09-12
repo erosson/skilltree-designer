@@ -1,4 +1,6 @@
 import * as M from './model'
+import * as C from './coords'
+import { assertNever } from './util'
 
 export interface Node {
     id: M.NodeId
@@ -17,13 +19,16 @@ export interface Tree {
     groups: Group[]
 }
 
-export function output(e: M.Element): Tree {
+export function output(es: M.Element[]): Tree {
+    return merge(es.map(output_))
+}
+function output_(e: M.Element): Tree {
     switch (e.type) {
         case M.ElementType.Node: return { nodes: [outputNode(e)], edges: [], groups: [] }
-        case M.ElementType.EdgeGroup: return outputEdgeGroup(e)
-        case M.ElementType.XYGroup: return outputXYGroup(e)
-        case M.ElementType.OrbitGroup: return outputOrbitGroup(e)
-        default: throw new Error(((exhaustive: never) => "unreachable")(e))
+        case M.ElementType.Edges: return outputEdges(e)
+        case M.ElementType.Offset: return outputOffset(e)
+        case M.ElementType.Orbit: return output(M.orbitToOffsets(e))
+        default: throw assertNever(e)
     }
 }
 function outputNode(n: M.Node): Node {
@@ -33,31 +38,18 @@ function outputNode(n: M.Node): Node {
         y: 0,
     }
 }
-function offsetXY([x, y]: M.XY, o: Tree): Tree {
+function offsetXY(c: C.XYCoords, o: Tree): Tree {
     return {
         ...o,
         nodes: o.nodes.map(n => ({
             ...n,
-            x: n.x + x,
-            y: n.y + y
+            x: n.x + c.x,
+            y: n.y + c.y
         })),
     }
 }
-function offsetPolar(radius: number, angleRadians: number, o: Tree): Tree {
-    // like math classes:
-    //   +y 
-    // -x  +x
-    //   -y
-    // const theta = -(angleRadians - Math.PI / 2)
-
-    // like html:
-    //   -y 
-    // -x  +x
-    //   +y
-    const theta = angleRadians - Math.PI / 2
-    const x = Math.round(radius * Math.cos(theta))
-    const y = Math.round(radius * Math.sin(theta))
-    return offsetXY([x, y], o)
+function offset(c: C.Coords, o: Tree): Tree {
+    return offsetXY(C.toXY(c), o)
 }
 function merge(os: Tree[]): Tree {
     return {
@@ -66,8 +58,8 @@ function merge(os: Tree[]): Tree {
         groups: os.map(o => o.groups).flat(),
     }
 }
-function outputEdgeGroup(g: M.EdgeGroup): Tree {
-    const o = output(g.el)
+function outputEdges(g: M.Edges): Tree {
+    const o = output(g.els)
     const out = {
         nodes: o.nodes,
         groups: o.groups,
@@ -76,17 +68,8 @@ function outputEdgeGroup(g: M.EdgeGroup): Tree {
     // out.groups.push(...)
     return out
 }
-function outputXYGroup(g: M.XYGroup): Tree {
-    const out = merge(g.els.map(([xy, el]) => offsetXY(xy, output(el))))
-    // out.groups.push(...)
-    return out
-}
-function outputOrbitGroup(g: M.OrbitGroup): Tree {
-    const out = merge(g.orbits.map(o =>
-        o.els.map(([slice, el]) =>
-            offsetPolar(o.radius, 2 * Math.PI * slice / o.slices, output(el))
-        )
-    ).flat().concat(g.origin ? [output(g.origin)] : []))
+function outputOffset(g: M.Offset): Tree {
+    const out = offset(g.offset, output(g.els))
     // out.groups.push(...)
     return out
 }

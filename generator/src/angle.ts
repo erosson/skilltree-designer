@@ -48,3 +48,9 @@ export function atan(n: number): Angle {
 export function atan2(y: number, x: number): Angle {
     return radians(Math.atan2(y, x))
 }
+
+export const right = revolutions(0 / 4)
+export const up = revolutions(1 / 4)
+export const left = revolutions(2 / 4)
+export const down = revolutions(3 / 4)
+export const directions = { right, up, left, down }

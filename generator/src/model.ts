@@ -1,9 +1,12 @@
-export type Element = Node | Group
+import * as C from './coords'
+import { assertNever } from './util'
+
+export type Element = Node | Edges | Offset | Orbit
 export enum ElementType {
     Node = "node",
-    EdgeGroup = "edge",
-    XYGroup = "xy",
-    OrbitGroup = "orbit",
+    Edges = "edges",
+    Offset = "offset",
+    Orbit = "orbit",
 }
 
 export interface Node {
@@ -12,27 +15,27 @@ export interface Node {
     body: object
 }
 export type NodeId = string & { readonly __tag: unique symbol }
+
 export type Edge = [NodeId, NodeId]
-
-export type Group = EdgeGroup | XYGroup | OrbitGroup
-
-export interface EdgeGroup {
-    type: ElementType.EdgeGroup
+export interface Edges {
+    type: ElementType.Edges
     edges: Edge[]
-    el: Element
+    els: Element[]
 }
-export interface XYGroup {
-    type: ElementType.XYGroup
-    els: [XY, Element][]
+export interface Offset {
+    type: ElementType.Offset
+    offset: C.Coords
+    els: Element[]
 }
-export type XY = [number, number]
 
-export interface OrbitGroup {
-    type: ElementType.OrbitGroup
-    orbits: Orbit[]
-    origin?: Element
-}
+/**
+ * Path of Exile-style orbits
+ * 
+ * PoE builds much of their skill trees using orbits. An orbit has a radius and a number of "slices"; each element specifies which slice it's placed on.
+ * Forcing radius to be set in one place and having consistent slice sizes seems to do a nice job of keeping their trees looking nice.
+ */
 export interface Orbit {
+    type: ElementType.Orbit
     radius: number
     slices: number
     els: [number, Element][]
@@ -62,9 +65,8 @@ export function node(idOrBody?: string | NodeId | object, body: object = {}): No
 export function edge(a: string | NodeId, b: string | NodeId): Edge {
     return [a as NodeId, b as NodeId]
 }
-export function edges(el: Element, edges: Edge[]): EdgeGroup {
-    const ids: Set<NodeId> = new Set(getDescendantNodes(el).map(n => n.id));
-    console.log(JSON.stringify(el, null, 2))
+export function edges(els: Element[], edges: Edge[]): Edges {
+    const ids: Set<NodeId> = new Set(getDescendantNodes(els).map(n => n.id));
     for (let edge of edges) {
         for (let v of edge) {
             if (!ids.has(v)) {
@@ -72,36 +74,56 @@ export function edges(el: Element, edges: Edge[]): EdgeGroup {
             }
         }
     }
-    return { type: ElementType.EdgeGroup, edges, el }
+    return { type: ElementType.Edges, edges, els }
 }
-export function xy(els: [XY, Element][]): XYGroup {
-    return { type: ElementType.XYGroup, els }
-}
-export function orbits(orbs: Orbit[], origin?: Element): OrbitGroup {
-    return { type: ElementType.OrbitGroup, orbits: orbs, origin }
+export function offset(els: Element[], offset: C.Coords): Offset {
+    return { type: ElementType.Offset, els, offset }
 }
 export function orbit(els: [number, Element][], { radius, slices }: { radius: number, slices: number }): Orbit {
-    return { radius, slices, els }
+    return { type: ElementType.Orbit, radius, slices, els }
+}
+export function orbitToOffsets(os: Orbit): Offset[] {
+    return os.els.map(([slice, el]) => {
+        // angles go counterclockwise, and start from straight-right
+        // poe-style orbits go clockwise, and start from straight-up
+        const angle = C.revolutions(-slice / os.slices - 1 / 4)
+        const off = C.polar(os.radius, angle)
+        return offset([el], off)
+    })
 }
 
 function getChildren(el: Element): Element[] {
     switch (el.type) {
         case ElementType.Node: return []
-        case ElementType.EdgeGroup: return [el.el]
-        case ElementType.XYGroup: return el.els.map(([xy, e]) => e).flat()
-        case ElementType.OrbitGroup: return el.orbits.map(o => o.els.map(([slice, e]) => e)).flat().concat(el.origin ? [el.origin] : []).flat()
-        default: throw new Error(((exhaustive: never) => "unreachable")(el))
+        case ElementType.Edges: return el.els
+        case ElementType.Offset: return el.els
+        case ElementType.Orbit: return el.els.map(([slice, el]) => el)
+        default: throw assertNever(el)
     }
 }
-export function getDescendantNodes(el: Element): Node[] {
+
+function getNodesWithAncestors_(el: Element): [Node, Element[]][] {
     switch (el.type) {
-        case ElementType.Node: return [el]
-        default: return getChildren(el).map(getDescendantNodes).flat()
+        case ElementType.Node: return [[el, []]]
+        default: return getChildren(el).map(getNodesWithAncestors_).flat().map(([c, as]) => [c, [...as, el]])
     }
 }
-export function getDescendantEdges(el: Element): Edge[] {
+export function getNodesWithAncestors(els: Element[]): [Node, Element[]][] {
+    return els.map(getNodesWithAncestors_).flat()
+}
+export function getDescendantNodes(els: Element[]): Node[] {
+    return getNodesWithAncestors(els).map(([c, as]) => c)
+}
+
+function getEdgesWithAncestors_(el: Element): [Edge, Element[]][] {
     switch (el.type) {
-        case ElementType.EdgeGroup: return el.edges
-        default: return getChildren(el).map(getDescendantEdges).flat()
+        case ElementType.Edges: return el.edges.map(e => [e, []])
+        default: return getChildren(el).map(getEdgesWithAncestors_).flat().map(([c, as]) => [c, [...as, el]])
     }
+}
+export function getEdgesWithAncestors(els: Element[]): [Edge, Element[]][] {
+    return els.map(getEdgesWithAncestors_).flat()
+}
+export function getDescendantEdges(els: Element[]): Edge[] {
+    return getEdgesWithAncestors(els).map(([c, as]) => c)
 }
